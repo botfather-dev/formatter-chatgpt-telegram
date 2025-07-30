@@ -793,21 +793,80 @@ def test_nested_code_fence_six_backticks():
 print('hi')
 `````
 ``````"""
-    expected_output = (
-        "<pre><code class=\"language-markdown\">`````python\nprint('hi')\n`````\n</code></pre>"
-    )
+    expected_output = """<pre><code class=\"language-markdown\">`````python
+print('hi')
+`````
+</code></pre>"""
     output = telegram_format(input_text)
     assert output == expected_output
 
 
 def test_nested_code_fence_plain_text():
-    input_text = """````markdown
+    input_text = """
+````markdown
 ```
 hello
 ```
 ````"""
-    expected_output = (
-        "<pre><code class=\"language-markdown\">```\nhello\n```\n</code></pre>"
-    )
+    expected_output = """<pre><code class=\"language-markdown\">```
+hello
+```
+</code></pre>"""
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+
+
+
+
+def test_expensive_nested_code_five_fence_plain_text():
+    input_text = """
+`````markdown
+````
+```python
+print("hello world ```")
+```
+`````"""
+    expected_output = """"<pre><code class=\"language-markdown\">````
+```python
+print("hello world ```")
+```
+````
+</code></pre>"""
+    
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+def test_another_expensive_nested_code_five_fence_plain_text():
+    input_text = """`````markdown
+````python
+print("hello world ```"')
+```
+`````"""
+    expected_output = """"<pre><code class=\"language-markdown\">````python
+print("hello world ```"')
+```
+````
+</code></pre>"""
+    
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+def test_hard_level_nested_code_five_fence_plain_text():
+    input_text = """`````markdown
+````python
+print("hello world ```"')
+```
+`````
+```python
+print("Some another text")""" # Вот тут не хватает закрытия второго блока кода питон
+
+    expected_output = """"<pre><code class=\"language-markdown\">````python
+print("hello world ```"')
+````
+</code></pre>
+<pre><code class=\"language-python\">print("Some another text")
+</code></pre>"""
+    
     output = telegram_format(input_text)
     assert output == expected_output
