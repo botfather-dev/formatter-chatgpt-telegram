@@ -773,6 +773,20 @@ print(1)
     assert output == expected_output
 
 
+def test_nested_code_fence_five_backticks_with_inner_triple():
+    input_text = """`````markdown
+````python
+print("hello world ```")
+````
+`````"""
+    expected_output = (
+        "<pre><code class=\"language-markdown\">````python\n"
+        "print(\"hello world ```\")\n````\n</code></pre>"
+    )
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+
 def test_nested_code_fence_six_backticks():
     input_text = """``````markdown
 `````python
@@ -797,4 +811,3 @@ hello
     )
     output = telegram_format(input_text)
     assert output == expected_output
-

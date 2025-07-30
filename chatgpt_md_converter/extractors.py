@@ -2,16 +2,43 @@ import re
 
 
 def ensure_closing_delimiters(text: str) -> str:
-    """
-    Ensures that if an opening ` or ``` is found without a matching closing delimiter,
-    the missing delimiter is appended to the end of the text.
-    """
-    # For triple backticks
-    if text.count("```") % 2 != 0:
+    """Append missing closing backtick delimiters."""
+
+    code_block_re = re.compile(
+        r"(?P<fence>`{3,})(?P<lang>\w+)?\n?[\s\S]*?(?<=\n)?(?P=fence)",
+        flags=re.DOTALL,
+    )
+
+    # Remove complete code blocks from consideration so inner backticks
+    # don't affect delimiter balancing.
+    cleaned = code_block_re.sub("", text)
+
+    # Detect unclosed fences by tracking opening fence lengths.
+    stack = []
+    for line in cleaned.splitlines():
+        m = re.match(r"^(?P<fence>`{3,})(?P<lang>\w+)?$", line.strip())
+        if not m:
+            continue
+        fence = m.group("fence")
+        if stack and fence == stack[-1]:
+            stack.pop()
+        else:
+            stack.append(fence)
+
+    if stack:
+        text += "\n" + stack[-1]
+
+    cleaned_inline = code_block_re.sub("", text)
+
+    # Balance triple backticks that are not part of a complete fence.
+    if cleaned_inline.count("```") % 2 != 0:
         text += "```"
-    # For single backticks
-    if text.count("`") % 2 != 0:
+
+    # Balance single backticks outside fenced blocks.
+    cleaned_inline = code_block_re.sub("", text)
+    if cleaned_inline.count("`") % 2 != 0:
         text += "`"
+
     return text
 
 
