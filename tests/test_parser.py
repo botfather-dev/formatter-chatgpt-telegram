@@ -730,3 +730,71 @@ def test_ukrainian_text_with_inline_code():
     expected_output = """звісно, майстре тестування. ой та зрозуміло <code>&lt;LAUGH&gt;</code> що ти тут тестуєш."""
     output = telegram_format(input_text)
     assert output == expected_output, f"Output was: {output}"
+
+
+def test_nested_code_fence_quadruple():
+    input_text = """````markdown
+```python
+def hello_world():
+    print("Hello, World!")
+```
+````"""
+    expected_output = (
+        "<pre><code class=\"language-markdown\">```python\n"
+        "def hello_world():\n    print(\"Hello, World!\")\n```\n</code></pre>"
+    )
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+
+def test_nested_code_fence_quadruple_no_lang():
+    input_text = """````
+```python
+print('hi')
+```
+````"""
+    expected_output = (
+        "<pre><code>```python\nprint('hi')\n```\n</code></pre>"
+    )
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+
+def test_nested_code_fence_five_backticks():
+    input_text = """`````markdown
+````python
+print(1)
+````
+`````"""
+    expected_output = (
+        "<pre><code class=\"language-markdown\">````python\nprint(1)\n````\n</code></pre>"
+    )
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+
+def test_nested_code_fence_six_backticks():
+    input_text = """``````markdown
+`````python
+print('hi')
+`````
+``````"""
+    expected_output = (
+        "<pre><code class=\"language-markdown\">`````python\nprint('hi')\n`````\n</code></pre>"
+    )
+    output = telegram_format(input_text)
+    assert output == expected_output
+
+
+def test_nested_code_fence_plain_text():
+    input_text = """````markdown
+```
+hello
+```
+````"""
+    expected_output = (
+        "<pre><code class=\"language-markdown\">```\nhello\n```\n</code></pre>"
+    )
+    output = telegram_format(input_text)
+    assert output == expected_output
+

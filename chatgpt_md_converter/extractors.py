@@ -25,8 +25,8 @@ def extract_and_convert_code_blocks(text: str):
     code_blocks = {}
 
     def replacer(match):
-        language = match.group(1) if match.group(1) else ""
-        code_content = match.group(3)
+        language = match.group("lang") if match.group("lang") else ""
+        code_content = match.group("code")
 
         # Properly escape HTML entities in code content
         escaped_content = (
@@ -44,8 +44,14 @@ def extract_and_convert_code_blocks(text: str):
         return (placeholder, html_code_block)
 
     modified_text = text
-    for match in re.finditer(r"```(\w*)?(\n)?(.*?)```", text, flags=re.DOTALL):
-        placeholder, html_code_block = replacer(match)
+    code_block_pattern = re.compile(
+        r"(?P<fence>`{3,})(?P<lang>\w+)?\n?(?P<code>[\s\S]*?)(?<=\n)?(?P=fence)",
+        flags=re.DOTALL,
+    )
+    for match in code_block_pattern.finditer(text):
+        placeholder, html_code_block = replacer(
+            match
+        )
         code_blocks[placeholder] = html_code_block
         modified_text = modified_text.replace(match.group(0), placeholder, 1)
 
