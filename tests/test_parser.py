@@ -859,14 +859,14 @@ print("hello world ```"')
 ```
 `````
 ```python
-print("Some another text")""" # Вот тут не хватает закрытия второго блока кода питон
+print("Some another text")""" # That's where closing the second block of python code is missing.
 
     expected_output = """"<pre><code class=\"language-markdown\">````python
 print("hello world ```"')
 ````
 </code></pre>
 <pre><code class=\"language-python\">print("Some another text")
-</code></pre>"""
+</code></pre>""" # But the code block is still closed correctly.
     
     output = telegram_format(input_text)
     assert output == expected_output
