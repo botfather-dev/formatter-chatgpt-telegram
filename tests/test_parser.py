@@ -744,7 +744,10 @@ def hello_world():
         "def hello_world():\n    print(\"Hello, World!\")\n```\n</code></pre>"
     )
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 
 def test_nested_code_fence_quadruple_no_lang():
@@ -757,7 +760,10 @@ print('hi')
         "<pre><code>```python\nprint('hi')\n```\n</code></pre>"
     )
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 
 def test_nested_code_fence_five_backticks():
@@ -770,7 +776,10 @@ print(1)
         "<pre><code class=\"language-markdown\">````python\nprint(1)\n````\n</code></pre>"
     )
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 
 def test_nested_code_fence_five_backticks_with_inner_triple():
@@ -784,7 +793,10 @@ print("hello world ```")
         "print(\"hello world ```\")\n````\n</code></pre>"
     )
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 
 def test_nested_code_fence_six_backticks():
@@ -798,7 +810,10 @@ print('hi')
 `````
 </code></pre>"""
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 
 def test_nested_code_fence_plain_text():
@@ -813,7 +828,10 @@ hello
 ```
 </code></pre>"""
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 
 
@@ -827,15 +845,17 @@ def test_expensive_nested_code_five_fence_plain_text():
 print("hello world ```")
 ```
 `````"""
-    expected_output = """"<pre><code class=\"language-markdown\">````
+
+    expected_output = """<pre><code class=\"language-markdown\">````
 ```python
 print("hello world ```")
 ```
-````
 </code></pre>"""
-    
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 def test_another_expensive_nested_code_five_fence_plain_text():
     input_text = """`````markdown
@@ -843,30 +863,55 @@ def test_another_expensive_nested_code_five_fence_plain_text():
 print("hello world ```"')
 ```
 `````"""
-    expected_output = """"<pre><code class=\"language-markdown\">````python
+
+    expected_output = """<pre><code class=\"language-markdown\">````python
 print("hello world ```"')
 ```
-````
 </code></pre>"""
-    
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
 
 def test_hard_level_nested_code_five_fence_plain_text():
     input_text = """`````markdown
 ````python
 print("hello world ```"')
-```
+````
 `````
 ```python
 print("Some another text")""" # That's where closing the second block of python code is missing.
 
-    expected_output = """"<pre><code class=\"language-markdown\">````python
+    expected_output = """<pre><code class="language-markdown">````python
 print("hello world ```"')
 ````
 </code></pre>
-<pre><code class=\"language-python\">print("Some another text")
+<pre><code class="language-python">print("Some another text")
 </code></pre>""" # But the code block is still closed correctly.
     
     output = telegram_format(input_text)
-    assert output == expected_output
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
+
+def test_hard_level_nested_code_five_fence_plain_text_2():
+    input_text = """`````markdown
+````python
+print("hello world ```"')
+`````
+```python
+print("Some another text")""" # That's where closing the second block of python code is missing.
+
+    expected_output = """<pre><code class="language-markdown">````python
+print("hello world ```"')
+</code></pre>
+<pre><code class="language-python">print("Some another text")
+</code></pre>""" # But the code block is still closed correctly.
+    
+    output = telegram_format(input_text)
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
