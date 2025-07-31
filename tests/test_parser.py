@@ -745,7 +745,7 @@ def hello_world():
     )
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -761,7 +761,7 @@ print('hi')
     )
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -777,7 +777,7 @@ print(1)
     )
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -794,7 +794,7 @@ print("hello world ```")
     )
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -811,7 +811,7 @@ print('hi')
 </code></pre>"""
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -829,7 +829,7 @@ hello
 </code></pre>"""
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -850,11 +850,10 @@ print("hello world ```")
 ```python
 print("hello world ```")
 ```
-````
 </code></pre>"""
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -871,7 +870,7 @@ print("hello world ```"')
 </code></pre>"""
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
 
@@ -879,6 +878,7 @@ def test_hard_level_nested_code_five_fence_plain_text():
     input_text = """`````markdown
 ````python
 print("hello world ```"')
+````
 `````
 ```python
 print("Some another text")""" # That's where closing the second block of python code is missing.
@@ -892,6 +892,26 @@ print("hello world ```"')
     
     output = telegram_format(input_text)
     def show_output():
-      print(f"Expected was: \n\n{expected_output}")
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()
+
+def test_hard_level_nested_code_five_fence_plain_text_2():
+    input_text = """`````markdown
+````python
+print("hello world ```"')
+`````
+```python
+print("Some another text")""" # That's where closing the second block of python code is missing.
+
+    expected_output = """<pre><code class="language-markdown">````python
+print("hello world ```"')
+</code></pre>
+<pre><code class="language-python">print("Some another text")
+</code></pre>""" # But the code block is still closed correctly.
+    
+    output = telegram_format(input_text)
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
