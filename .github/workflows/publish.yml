@@ -12,36 +12,36 @@ jobs:
 
     permissions:
       contents: read
-      id-token: write
+      id-token: write  # Required for trusted publishing
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install setuptools wheel twine
+          pip install build twine
 
       - name: Check if version exists
         run: |
           VERSION=$(python setup.py --version)
-          if pip index versions chatgpt-md-converter 2>/dev/null | grep -q "^chatgpt-md-converter ($VERSION)$"; then
+          echo "Checking version: $VERSION"
+          if python -c "import requests; requests.get(f'https://pypi.org/pypi/chatgpt-md-converter/{VERSION}/json').raise_for_status()" 2>/dev/null; then
             echo "Version $VERSION already exists on PyPI"
             exit 1
+          else
+            echo "Version $VERSION is new"
           fi
 
       - name: Build the package
-        run: |
-          python setup.py sdist bdist_wheel
+        run: python -m build
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
+        # No user/password needed with trusted publishing!
