@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="chatgpt_md_converter",
-    version="0.3.6",
+    version="0.3.7",
     author="Kostiantyn Kriuchkov",
     author_email="latand666@gmail.com",
     description="A package for converting markdown to HTML for chat Telegram bots",
