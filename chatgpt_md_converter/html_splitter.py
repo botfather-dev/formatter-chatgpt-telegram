@@ -11,7 +11,10 @@ class HTMLTagTracker(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         # saving tags
-        if tag in ("b", "i", "u", "s", "code", "pre", "a", "span", "blockquote"):
+        if tag in (
+                  "b", "i", "u", "s", "code", "pre", "a", "span", "blockquote",
+                  "strong", "em", "ins", "strike", "del", "tg-spoiler", "tg-emoji"
+                  ):
             self.open_tags.append((tag, attrs))
 
     def handle_endtag(self, tag):
@@ -34,6 +37,20 @@ class HTMLTagTracker(HTMLParser):
 
 
 def split_pre_block(pre_block: str, max_length) -> list[str]:
+    """
+    Splits long HTML-formatted text into chunks suitable for sending via Telegram, 
+    preserving valid HTML tag nesting and handling <pre>/<code> blocks separately.
+
+    Args:
+        text (str): The input HTML-formatted string.
+        trim_leading_newlines (bool): If True, removes leading newline characters (`\\n`)
+            from each resulting chunk before sending. This is useful to avoid 
+            unnecessary blank space at the beginning of messages in Telegram.
+
+    Returns:
+        list[str]: A list of HTML-formatted message chunks, each within Telegram's length limit.
+    """
+
     # language-aware: <pre><code class="language-python">...</code></pre>
     match = re.match(r"<pre><code(.*?)>(.*)</code></pre>", pre_block, re.DOTALL)
     if match:
