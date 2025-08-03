@@ -33,7 +33,7 @@ class HTMLTagTracker(HTMLParser):
         return "".join(f"</{tag}>" for tag, _ in reversed(self.open_tags))
 
 
-def split_pre_block(pre_block: str) -> list[str]:
+def split_pre_block(pre_block: str, max_length) -> list[str]:
     # language-aware: <pre><code class="language-python">...</code></pre>
     match = re.match(r"<pre><code(.*?)>(.*)</code></pre>", pre_block, re.DOTALL)
     if match:
@@ -41,7 +41,7 @@ def split_pre_block(pre_block: str) -> list[str]:
         lines = content.splitlines(keepends=True)
         chunks, buf = [], ""
         for line in lines:
-            if len(buf) + len(line) + len('<pre><code></code></pre>') > MAX_LENGTH:
+            if len(buf) + len(line) + len('<pre><code></code></pre>') > max_length:
                 chunks.append(f"<pre><code{attr}>{buf}</code></pre>")
                 buf = ""
             buf += line
@@ -54,7 +54,7 @@ def split_pre_block(pre_block: str) -> list[str]:
         lines = inner.splitlines(keepends=True)
         chunks, buf = [], ""
         for line in lines:
-            if len(buf) + len(line) + len('<pre></pre>') > MAX_LENGTH:
+            if len(buf) + len(line) + len('<pre></pre>') > max_length:
                 chunks.append(f"<pre>{buf}</pre>")
                 buf = ""
             buf += line
@@ -63,7 +63,7 @@ def split_pre_block(pre_block: str) -> list[str]:
         return chunks
 
 
-def split_html_for_telegram(text: str) -> list[str]:
+def split_html_for_telegram(text: str, trim_leading_newlines = False, max_length = MAX_LENGTH) -> list[str]:
     chunks = []
     pattern = re.compile(r"(<pre>.*?</pre>|<pre><code.*?</code></pre>)", re.DOTALL)
     parts = pattern.split(text)
@@ -72,7 +72,7 @@ def split_html_for_telegram(text: str) -> list[str]:
         if not part:
             continue
         if part.startswith("<pre>") or part.startswith("<pre><code"):
-            pre_chunks = split_pre_block(part)
+            pre_chunks = split_pre_block(part, max_length = max_length)
             chunks.extend(pre_chunks)
         else:
             # breaking down regular HTML
@@ -81,7 +81,7 @@ def split_html_for_telegram(text: str) -> list[str]:
             blocks = re.split(r"(\n\s*\n|<br\s*/?>|\n)", part)
             for block in blocks:
                 prospective = current + block
-                if len(prospective) > MAX_LENGTH:
+                if len(prospective) > max_length:
                     tracker.feed(current)
                     open_tags = tracker.get_open_tags_html()
                     close_tags = tracker.get_closing_tags_html()
@@ -100,15 +100,14 @@ def split_html_for_telegram(text: str) -> list[str]:
     merged_chunks = []
     buf = ""
     for chunk in chunks:
-        # chunk = chunk.lstrip("\n")  # removing leading line breaks
 
-        if len(buf) + len(chunk) <= MAX_LENGTH:
+        if len(buf) + len(chunk) <= max_length:
             buf += chunk
         else:
             if buf:
-                merged_chunks.append(buf)
+                merged_chunks.append(buf.lstrip("\n") if trim_leading_newlines else buf)
             buf = chunk
     if buf:
-        merged_chunks.append(buf)
+        merged_chunks.append(buf.lstrip("\n") if trim_leading_newlines else buf)
 
     return merged_chunks
