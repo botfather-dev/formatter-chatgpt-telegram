@@ -915,3 +915,23 @@ print("hello world ```"')
       print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
+
+def test_some_new():
+    input_text = """
+``````markdown
+`````
+````python
+print("hello world ```")
+```
+""" # Markdown code wasn't closed
+
+    expected_output = """<pre><code class=\"language-markdown\">`````
+````python
+print("hello world ```")
+```
+</code></pre>""" # But after closed correctly
+    output = telegram_format(input_text)
+    def show_output():
+      print(f"Expected was: \n\n{expected_output}\n\n")
+      print(f"output was: \n\n{output}")
+    assert output == expected_output, show_output()

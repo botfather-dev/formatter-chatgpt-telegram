@@ -2,31 +2,32 @@ import re
 
 
 def ensure_closing_delimiters(text: str) -> str:
-    """Append missing closing backtick delimiters."""
+    # Append missing closing backtick delimiters.
 
     code_block_re = re.compile(
         r"(?P<fence>`{3,})(?P<lang>\w+)?\n?[\s\S]*?(?<=\n)?(?P=fence)",
         flags=re.DOTALL,
     )
 
-    # Remove complete code blocks from consideration so inner backticks
-    # don't affect delimiter balancing.
-    cleaned = code_block_re.sub("", text)
-
-    # Detect unclosed fences by tracking opening fence lengths.
-    stack = []
-    for line in cleaned.splitlines():
-        m = re.match(r"^(?P<fence>`{3,})(?P<lang>\w+)?$", line.strip())
-        if not m:
-            continue
-        fence = m.group("fence")
-        if stack and fence == stack[-1]:
-            stack.pop()
+    # Track an open fence.  Once a fence is opened, everything until the same
+    # fence is encountered again is treated as plain text.  This mimics how
+    # Markdown handles fences and allows fence-like strings inside code blocks.
+    open_fence = None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if open_fence is None:
+            m = re.match(r"^(?P<fence>`{3,})(?P<lang>\w+)?$", stripped)
+            if m:
+                open_fence = m.group("fence")
         else:
-            stack.append(fence)
+            if stripped.endswith(open_fence):
+                open_fence = None
 
-    if stack:
-        text += "\n" + stack[-1]
+    # If a fence was left open, append a matching closing fence.
+    if open_fence is not None:
+        if not text.endswith("\n"):
+            text += "\n"
+        text += open_fence
 
     cleaned_inline = code_block_re.sub("", text)
 
