@@ -93,17 +93,18 @@ def _effective_length(content: str) -> int:
     return len(tracker.get_open_tags_html()) + len(content) + len(tracker.get_closing_tags_html())
 
 
-def split_html_for_telegram(text: str, trim_empty_leadming_lines: bool = False, max_length: int = MAX_LENGTH) -> list[str]:
+def split_html_for_telegram(text: str, trim_empty_leading_lines: bool = False, max_length: int = MAX_LENGTH) -> list[str]:
     """Split long HTML-formatted text into Telegram-compatible chunks.
 
     Parameters
     ----------
     text: str
         Input HTML text.
-    trim_empty_leadming_lines: bool, optional
+    trim_empty_leading_lines: bool, optional
         If True, removes `\n` sybmols from start of chunks.
     max_length: int, optional
         Maximum allowed length for a single chunk (must be >= ``MIN_LENGTH = 500``).
+        Default = 4096 (symbols)
 
     Returns
     -------
@@ -177,8 +178,8 @@ def split_html_for_telegram(text: str, trim_empty_leadming_lines: bool = False, 
         else:
             if buf:
                 merged.append(buf)
-            buf = chunk.lstrip("\n") if trim_empty_leadming_lines and merged else chunk
+            buf = chunk.lstrip("\n") if trim_empty_leading_lines and merged else chunk
     if buf:
-        merged.append(buf.lstrip("\n") if trim_empty_leadming_lines and merged else buf)
+        merged.append(buf.lstrip("\n") if trim_empty_leading_lines and merged else buf)
 
     return merged

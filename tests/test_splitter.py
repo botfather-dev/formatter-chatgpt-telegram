@@ -12,7 +12,7 @@ def test_html_splitter():
         )
 
 def test_html_splitter__remove_leading_brakes():
-    chunks = split_html_for_telegram(input_text, trim_empty_leadming_lines=True)
+    chunks = split_html_for_telegram(input_text, trim_empty_leading_lines=True)
     valid_chunks = [valid_chunk_1, valid_chunk_2, valid_chunk_3_remove_leading_brakes]
     for index, chunk in enumerate(chunks):
         assert chunk == valid_chunks[index], (
@@ -21,7 +21,7 @@ def test_html_splitter__remove_leading_brakes():
 
 def test_html_splitter_max_length_550():
     chunks = split_html_for_telegram(
-        long_code_input, max_length=550, trim_empty_leadming_lines=True
+        long_code_input, max_length=550, trim_empty_leading_lines=True
     )
 
     def load_expected_chunks_550():
@@ -70,7 +70,7 @@ SHORT_TEXT = "<u>" + "another " * 9 + "another" + "</u>"
 
 def test_split_html_keeps_newline_without_trim():
     text = LONG_TEXT + "\n\n" + SHORT_TEXT
-    chunks = split_html_for_telegram(text, max_length=500, trim_empty_leadming_lines=False)
+    chunks = split_html_for_telegram(text, max_length=500, trim_empty_leading_lines=False)
     assert chunks[0] == LONG_TEXT
     assert chunks[1].startswith("\n")
     assert chunks[1].endswith(SHORT_TEXT)
@@ -80,5 +80,5 @@ def test_split_html_keeps_newline_without_trim():
 
 def test_split_html_trims_leading_newline_on_new_chunk():
     text = LONG_TEXT + "\n\n" + SHORT_TEXT
-    chunks = split_html_for_telegram(text, max_length=500, trim_empty_leadming_lines=True)
+    chunks = split_html_for_telegram(text, max_length=500, trim_empty_leading_lines=True)
     assert chunks == [LONG_TEXT, SHORT_TEXT]
