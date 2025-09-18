@@ -6,7 +6,7 @@ setup(
     author="Kostiantyn Kriuchkov",
     author_email="latand666@gmail.com",
     description="A package for converting markdown to HTML for chat Telegram bots",
-    long_description=open("README.MD").read(),
+    long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/botfather-dev/formatter-chatgpt-telegram",
     classifiers=[
