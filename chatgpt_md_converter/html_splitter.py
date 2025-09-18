@@ -39,13 +39,13 @@ class HTMLTagTracker(HTMLParser):
 
 def split_pre_block(pre_block: str, max_length) -> list[str]:
     """
-    Splits long HTML-formatted text into chunks suitable for sending via Telegram, 
+    Splits long HTML-formatted text into chunks suitable for sending via Telegram,
     preserving valid HTML tag nesting and handling <pre>/<code> blocks separately.
 
     Args:
         text (str): The input HTML-formatted string.
         trim_leading_newlines (bool): If True, removes leading newline characters (`\\n`)
-            from each resulting chunk before sending. This is useful to avoid 
+            from each resulting chunk before sending. This is useful to avoid
             unnecessary blank space at the beginning of messages in Telegram.
 
     Returns:
@@ -121,6 +121,8 @@ def split_html_for_telegram(text: str, trim_empty_leading_lines: bool = False, m
     chunks: list[str] = []
     prefix = ""
     current = ""
+    whitespace_re = re.compile(r"(\\s+)")
+    tag_re = re.compile(r"(<[^>]+>)")
 
     def finalize():
         nonlocal current, prefix
@@ -133,26 +135,78 @@ def split_html_for_telegram(text: str, trim_empty_leading_lines: bool = False, m
 
     def append_piece(piece: str):
         nonlocal current, prefix
-        if _effective_length(prefix + current + piece) <= max_length:
-            current += piece
-            return
-        if len(piece) > max_length:
-            if _is_only_tags(piece):
-                raise ValueError("block contains only html tags")
-            for word in re.split(r"(\s+)", piece):
-                if not word:
+
+        def split_on_whitespace(chunk: str) -> list[str] | None:
+            parts = [part for part in whitespace_re.split(chunk) if part]
+            if len(parts) <= 1:
+                return None
+            return parts
+
+        def split_on_tags(chunk: str) -> list[str] | None:
+            parts = [part for part in tag_re.split(chunk) if part]
+            if len(parts) <= 1:
+                return None
+            return parts
+
+        def fittable_prefix_length(chunk: str) -> int:
+            low, high = 1, len(chunk)
+            best = 0
+            while low <= high:
+                mid = (low + high) // 2
+                candidate = chunk[:mid]
+                if _effective_length(prefix + current + candidate) <= max_length:
+                    best = mid
+                    low = mid + 1
+                else:
+                    high = mid - 1
+            return best
+
+        while piece:
+            if _effective_length(prefix + current + piece) <= max_length:
+                current += piece
+                return
+
+            if len(piece) > max_length:
+                if _is_only_tags(piece):
+                    raise ValueError("block contains only html tags")
+                splitted = split_on_whitespace(piece)
+                if splitted:
+                    for part in splitted:
+                        append_piece(part)
+                    return
+                tag_split = split_on_tags(piece)
+                if tag_split:
+                    for part in tag_split:
+                        append_piece(part)
+                    return
+            elif current:
+                finalize()
+                continue
+            else:
+                splitted = split_on_whitespace(piece)
+                if splitted:
+                    for part in splitted:
+                        append_piece(part)
+                    return
+                tag_split = split_on_tags(piece)
+                if tag_split:
+                    for part in tag_split:
+                        append_piece(part)
+                    return
+
+            fitted = fittable_prefix_length(piece)
+            if fitted == 0:
+                if current:
+                    finalize()
                     continue
-                append_piece(word)
-            return
-        if current:
-            finalize()
-            append_piece(piece)
-        else:
-            # piece itself doesn't fit with prefix; split by words
-            for word in re.split(r"(\s+)", piece):
-                if not word:
-                    continue
-                append_piece(word)
+                raise ValueError("unable to split content within max_length")
+
+            current += piece[:fitted]
+            piece = piece[fitted:]
+
+            if piece:
+                finalize()
+
 
     for part in parts:
         if not part:
