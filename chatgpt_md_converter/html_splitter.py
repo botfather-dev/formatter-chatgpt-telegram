@@ -2,6 +2,7 @@ import re
 from html.parser import HTMLParser
 
 MAX_LENGTH = 4096
+MIN_LENGTH = 500
 
 
 class HTMLTagTracker(HTMLParser):
@@ -11,7 +12,10 @@ class HTMLTagTracker(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         # saving tags
-        if tag in ("b", "i", "u", "s", "code", "pre", "a", "span", "blockquote"):
+        if tag in (
+                  "b", "i", "u", "s", "code", "pre", "a", "span", "blockquote",
+                  "strong", "em", "ins", "strike", "del", "tg-spoiler", "tg-emoji"
+                  ):
             self.open_tags.append((tag, attrs))
 
     def handle_endtag(self, tag):
@@ -33,15 +37,30 @@ class HTMLTagTracker(HTMLParser):
         return "".join(f"</{tag}>" for tag, _ in reversed(self.open_tags))
 
 
-def split_pre_block(pre_block: str) -> list[str]:
+def split_pre_block(pre_block: str, max_length) -> list[str]:
+    """
+    Splits long HTML-formatted text into chunks suitable for sending via Telegram,
+    preserving valid HTML tag nesting and handling <pre>/<code> blocks separately.
+
+    Args:
+        text (str): The input HTML-formatted string.
+        trim_leading_newlines (bool): If True, removes leading newline characters (`\\n`)
+            from each resulting chunk before sending. This is useful to avoid
+            unnecessary blank space at the beginning of messages in Telegram.
+
+    Returns:
+        list[str]: A list of HTML-formatted message chunks, each within Telegram's length limit.
+    """
+
     # language-aware: <pre><code class="language-python">...</code></pre>
     match = re.match(r"<pre><code(.*?)>(.*)</code></pre>", pre_block, re.DOTALL)
     if match:
         attr, content = match.groups()
         lines = content.splitlines(keepends=True)
         chunks, buf = [], ""
+        overhead = len(f"<pre><code{attr}></code></pre>")
         for line in lines:
-            if len(buf) + len(line) + len('<pre><code></code></pre>') > MAX_LENGTH:
+            if len(buf) + len(line) + overhead > max_length:
                 chunks.append(f"<pre><code{attr}>{buf}</code></pre>")
                 buf = ""
             buf += line
@@ -53,8 +72,9 @@ def split_pre_block(pre_block: str) -> list[str]:
         inner = pre_block[5:-6]
         lines = inner.splitlines(keepends=True)
         chunks, buf = [], ""
+        overhead = len('<pre></pre>')
         for line in lines:
-            if len(buf) + len(line) + len('<pre></pre>') > MAX_LENGTH:
+            if len(buf) + len(line) + overhead > max_length:
                 chunks.append(f"<pre>{buf}</pre>")
                 buf = ""
             buf += line
@@ -63,52 +83,157 @@ def split_pre_block(pre_block: str) -> list[str]:
         return chunks
 
 
-def split_html_for_telegram(text: str) -> list[str]:
-    chunks = []
+def _is_only_tags(block: str) -> bool:
+    return bool(re.fullmatch(r'(?:\s*<[^>]+>\s*)+', block))
+
+
+def _effective_length(content: str) -> int:
+    tracker = HTMLTagTracker()
+    tracker.feed(content)
+    return len(tracker.get_open_tags_html()) + len(content) + len(tracker.get_closing_tags_html())
+
+
+def split_html_for_telegram(text: str, trim_empty_leading_lines: bool = False, max_length: int = MAX_LENGTH) -> list[str]:
+    """Split long HTML-formatted text into Telegram-compatible chunks.
+
+    Parameters
+    ----------
+    text: str
+        Input HTML text.
+    trim_empty_leading_lines: bool, optional
+        If True, removes `\n` sybmols from start of chunks.
+    max_length: int, optional
+        Maximum allowed length for a single chunk (must be >= ``MIN_LENGTH = 500``).
+        Default = 4096 (symbols)
+
+    Returns
+    -------
+    list[str]
+        List of HTML chunks.
+    """
+
+    if max_length < MIN_LENGTH:
+        raise ValueError("max_length should be at least %d" % MIN_LENGTH)
+
     pattern = re.compile(r"(<pre>.*?</pre>|<pre><code.*?</code></pre>)", re.DOTALL)
     parts = pattern.split(text)
+
+    chunks: list[str] = []
+    prefix = ""
+    current = ""
+    whitespace_re = re.compile(r"(\\s+)")
+    tag_re = re.compile(r"(<[^>]+>)")
+
+    def finalize():
+        nonlocal current, prefix
+        tracker = HTMLTagTracker()
+        tracker.feed(prefix + current)
+        chunk = prefix + current + tracker.get_closing_tags_html()
+        chunks.append(chunk)
+        prefix = tracker.get_open_tags_html()
+        current = ""
+
+    def append_piece(piece: str):
+        nonlocal current, prefix
+
+        def split_on_whitespace(chunk: str) -> list[str] | None:
+            parts = [part for part in whitespace_re.split(chunk) if part]
+            if len(parts) <= 1:
+                return None
+            return parts
+
+        def split_on_tags(chunk: str) -> list[str] | None:
+            parts = [part for part in tag_re.split(chunk) if part]
+            if len(parts) <= 1:
+                return None
+            return parts
+
+        def fittable_prefix_length(chunk: str) -> int:
+            low, high = 1, len(chunk)
+            best = 0
+            while low <= high:
+                mid = (low + high) // 2
+                candidate = chunk[:mid]
+                if _effective_length(prefix + current + candidate) <= max_length:
+                    best = mid
+                    low = mid + 1
+                else:
+                    high = mid - 1
+            return best
+
+        while piece:
+            if _effective_length(prefix + current + piece) <= max_length:
+                current += piece
+                return
+
+            if len(piece) > max_length:
+                if _is_only_tags(piece):
+                    raise ValueError("block contains only html tags")
+                splitted = split_on_whitespace(piece)
+                if splitted:
+                    for part in splitted:
+                        append_piece(part)
+                    return
+                tag_split = split_on_tags(piece)
+                if tag_split:
+                    for part in tag_split:
+                        append_piece(part)
+                    return
+            elif current:
+                finalize()
+                continue
+            else:
+                splitted = split_on_whitespace(piece)
+                if splitted:
+                    for part in splitted:
+                        append_piece(part)
+                    return
+                tag_split = split_on_tags(piece)
+                if tag_split:
+                    for part in tag_split:
+                        append_piece(part)
+                    return
+
+            fitted = fittable_prefix_length(piece)
+            if fitted == 0:
+                if current:
+                    finalize()
+                    continue
+                raise ValueError("unable to split content within max_length")
+
+            current += piece[:fitted]
+            piece = piece[fitted:]
+
+            if piece:
+                finalize()
+
 
     for part in parts:
         if not part:
             continue
         if part.startswith("<pre>") or part.startswith("<pre><code"):
-            pre_chunks = split_pre_block(part)
-            chunks.extend(pre_chunks)
-        else:
-            # breaking down regular HTML
-            tracker = HTMLTagTracker()
-            current = ""
-            blocks = re.split(r"(\n\s*\n|<br\s*/?>|\n)", part)
-            for block in blocks:
-                prospective = current + block
-                if len(prospective) > MAX_LENGTH:
-                    tracker.feed(current)
-                    open_tags = tracker.get_open_tags_html()
-                    close_tags = tracker.get_closing_tags_html()
-                    chunks.append(open_tags + current + close_tags)
-                    current = block
-                    tracker = HTMLTagTracker()
-                else:
-                    current = prospective
-            if current.strip():
-                tracker.feed(current)
-                open_tags = tracker.get_open_tags_html()
-                close_tags = tracker.get_closing_tags_html()
-                chunks.append(open_tags + current + close_tags)
+            pre_chunks = split_pre_block(part, max_length=max_length)
+            for pc in pre_chunks:
+                append_piece(pc)
+            continue
+        blocks = re.split(r"(\n\s*\n|<br\s*/?>|\n)", part)
+        for block in blocks:
+            if block:
+                append_piece(block)
 
-    # post-unification: combine chunks if they don't exceed the limit in total
-    merged_chunks = []
+    if current:
+        finalize()
+
+    merged: list[str] = []
     buf = ""
     for chunk in chunks:
-        # chunk = chunk.lstrip("\n")  # removing leading line breaks
-
-        if len(buf) + len(chunk) <= MAX_LENGTH:
+        if len(buf) + len(chunk) <= max_length:
             buf += chunk
         else:
             if buf:
-                merged_chunks.append(buf)
-            buf = chunk
+                merged.append(buf)
+            buf = chunk.lstrip("\n") if trim_empty_leading_lines and merged else chunk
     if buf:
-        merged_chunks.append(buf)
+        merged.append(buf.lstrip("\n") if trim_empty_leading_lines and merged else buf)
 
-    return merged_chunks
+    return merged
