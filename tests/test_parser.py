@@ -1,5 +1,6 @@
-from chatgpt_md_converter.extractors import ensure_closing_delimiters
 from chatgpt_md_converter.telegram_formatter import telegram_format
+from chatgpt_md_converter.telegram_markdown.code_blocks import \
+    ensure_closing_delimiters
 
 
 def test_split_by_tag_bold():
@@ -889,7 +890,7 @@ print("hello world ```"')
 </code></pre>
 <pre><code class="language-python">print("Some another text")
 </code></pre>""" # But the code block is still closed correctly.
-    
+
     output = telegram_format(input_text)
     def show_output():
       print(f"Expected was: \n\n{expected_output}\n\n")
@@ -909,7 +910,7 @@ print("hello world ```"')
 </code></pre>
 <pre><code class="language-python">print("Some another text")
 </code></pre>""" # But the code block is still closed correctly.
-    
+
     output = telegram_format(input_text)
     def show_output():
       print(f"Expected was: \n\n{expected_output}\n\n")
