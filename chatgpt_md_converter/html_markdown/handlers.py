@@ -35,30 +35,91 @@ def render_node(node: Node, state: RenderState) -> str:
     return render_nodes(node.children, state)
 
 
+def _split_surrounding_whitespace(text: str) -> tuple[str, str, str]:
+    """Return leading whitespace, core text, and trailing whitespace."""
+
+    start = 0
+    end = len(text)
+
+    while start < end and text[start].isspace():
+        start += 1
+
+    while end > start and text[end - 1].isspace():
+        end -= 1
+
+    return text[:start], text[start:end], text[end:]
+
+
+def _italic_boundary_conflict(marker: str, core: str) -> bool:
+    if marker == "*":
+        return core.startswith("*") or core.endswith("*")
+
+    if marker == "_":
+        starts = core.startswith("_")
+        if starts and len(core) > 1 and core[1] == "_":
+            starts = False
+
+        ends = core.endswith("_")
+        if ends and len(core) > 1 and core[-2] == "_":
+            ends = False
+
+        return starts or ends
+
+    return False
+
+
+def _choose_italic_marker(state: RenderState, core: str) -> str:
+    depth = state.italic_depth
+
+    if state.bold_depth > 0 and depth == 0:
+        candidates = ["_", "*"]
+    elif depth % 2 == 0:
+        candidates = ["*", "_"]
+    else:
+        candidates = ["_", "*"]
+
+    for marker in candidates:
+        if not _italic_boundary_conflict(marker, core):
+            return marker
+
+    return candidates[0]
+
+
 def _handle_bold(node: Node, state: RenderState) -> str:
     inner_state = state.child(bold_depth=state.bold_depth + 1)
     inner = render_nodes(node.children, inner_state)
-    return f"**{inner}**"
+    leading, core, trailing = _split_surrounding_whitespace(inner)
+    if not core:
+        return leading + trailing
+    return f"{leading}**{core}**{trailing}"
 
 
 def _handle_italic(node: Node, state: RenderState) -> str:
     depth = state.italic_depth
-    in_bold = state.bold_depth > 0 and depth == 0
-    marker = "_" if in_bold else ("*" if depth % 2 == 0 else "_")
     inner_state = state.child(italic_depth=depth + 1)
     inner = render_nodes(node.children, inner_state)
-    return f"{marker}{inner}{marker}"
+    leading, core, trailing = _split_surrounding_whitespace(inner)
+    if not core:
+        return leading + trailing
+    marker = _choose_italic_marker(state, core)
+    return f"{leading}{marker}{core}{marker}{trailing}"
 
 
 def _handle_inline_marker(node: Node, state: RenderState) -> str:
     marker_open, marker_close = _INLINE_MARKERS[node.tag.lower()]
     inner = render_nodes(node.children, state)
-    return f"{marker_open}{inner}{marker_close}"
+    leading, core, trailing = _split_surrounding_whitespace(inner)
+    if not core:
+        return leading + trailing
+    return f"{leading}{marker_open}{core}{marker_close}{trailing}"
 
 
 def _handle_spoiler(node: Node, state: RenderState) -> str:
     inner = render_nodes(node.children, state)
-    return f"||{inner}||"
+    leading, core, trailing = _split_surrounding_whitespace(inner)
+    if not core:
+        return leading + trailing
+    return f"{leading}||{core}||{trailing}"
 
 
 def _handle_code(node: Node, state: RenderState) -> str:
