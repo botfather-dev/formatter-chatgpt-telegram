@@ -3,10 +3,30 @@
 import re
 
 _inline_code_pattern = re.compile(r"`([^`]+)`")
-_italic_pattern = re.compile(
-    r"(?<![A-Za-z0-9])\*(?=[^\s])(.*?)(?<!\s)\*(?![A-Za-z0-9])",
+
+_BOLD_PATTERN = re.compile(r"(?<!\\)\*\*(?=\S)(.*?)(?<=\S)\*\*", re.DOTALL)
+_UNDERLINE_PATTERN = re.compile(
+    r"(?<!\\)(?<![A-Za-z0-9_])__(?=\S)(.*?)(?<=\S)__(?![A-Za-z0-9_])",
     re.DOTALL,
 )
+_ITALIC_UNDERSCORE_PATTERN = re.compile(
+    r"(?<!\\)(?<![A-Za-z0-9_])_(?=\S)(.*?)(?<=\S)_(?![A-Za-z0-9_])",
+    re.DOTALL,
+)
+_STRIKETHROUGH_PATTERN = re.compile(r"(?<!\\)~~(?=\S)(.*?)(?<=\S)~~", re.DOTALL)
+_SPOILER_PATTERN = re.compile(r"(?<!\\)\|\|(?=\S)([^\n]*?)(?<=\S)\|\|")
+_ITALIC_STAR_PATTERN = re.compile(
+    r"(?<![A-Za-z0-9\\])\*(?!\*)(?=[^\s])(.*?)(?<![\s\\])\*(?![A-Za-z0-9\\])",
+    re.DOTALL,
+)
+
+_PATTERN_MAP = {
+    "**": _BOLD_PATTERN,
+    "__": _UNDERLINE_PATTERN,
+    "_": _ITALIC_UNDERSCORE_PATTERN,
+    "~~": _STRIKETHROUGH_PATTERN,
+    "||": _SPOILER_PATTERN,
+}
 
 
 def convert_html_chars(text: str) -> str:
@@ -17,13 +37,21 @@ def convert_html_chars(text: str) -> str:
 
 
 def split_by_tag(out_text: str, md_tag: str, html_tag: str) -> str:
-    tag_pattern = re.compile(
-        r"(?<!\w){}(.*?){}(?!\w)".format(re.escape(md_tag), re.escape(md_tag)),
-        re.DOTALL,
-    )
-    if html_tag == 'span class="tg-spoiler"':
-        return tag_pattern.sub(r'<span class="tg-spoiler">\1</span>', out_text)
-    return tag_pattern.sub(r"<{}>\1</{}>".format(html_tag, html_tag), out_text)
+    pattern = _PATTERN_MAP.get(md_tag)
+    if pattern is None:
+        escaped = re.escape(md_tag)
+        pattern = re.compile(
+            rf"(?<!\\){escaped}(?=\S)(.*?)(?<=\S){escaped}",
+            re.DOTALL,
+        )
+
+    def _wrap(match: re.Match[str]) -> str:
+        inner = match.group(1)
+        if html_tag == 'span class="tg-spoiler"':
+            return f'<span class="tg-spoiler">{inner}</span>'
+        return f"<{html_tag}>{inner}</{html_tag}>"
+
+    return pattern.sub(_wrap, out_text)
 
 
 def extract_inline_code_snippets(text: str):
@@ -42,4 +70,4 @@ def extract_inline_code_snippets(text: str):
 
 
 def apply_custom_italic(text: str) -> str:
-    return _italic_pattern.sub(r"<i>\1</i>", text)
+    return _ITALIC_STAR_PATTERN.sub(r"<i>\1</i>", text)

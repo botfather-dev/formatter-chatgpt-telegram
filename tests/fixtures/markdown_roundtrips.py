@@ -8,7 +8,7 @@ ROUND_TRIP_CASES = [
         "basic_formatting",
         "Hello, **bold** _italic_ __underline__ ~~strike~~ ||spoiler||"
         " [link](http://example.com) and [user](tg://user?id=123456789) with `code`",
-        "Hello, **bold** *italic* __underline__ ~~strike~~ ||spoiler||"
+        "Hello, **bold** _italic_ __underline__ ~~strike~~ ||spoiler||"
         " [link](http://example.com) and [user](tg://user?id=123456789) with `code`",
     ),
     (
@@ -115,7 +115,7 @@ ROUND_TRIP_CASES = [
     (
         "inline_code_escaping",
         "Escaped \\*asterisks\\* and `code with \\` backtick`",
-        "Escaped \\*asterisks\\* and `code with \\` backtick``",
+        "Escaped \\*asterisks\\* and `code with \\` backtick`",
     ),
     (
         "standalone_pre_block",
@@ -182,12 +182,12 @@ ROUND_TRIP_CASES = [
     (
         "italic_underscore",
         "This is _italic_ text",
-        "This is *italic* text",
+        "This is _italic_ text",
     ),
     (
         "italic_star",
         "This is *italic* text",
-        "This is *italic* text",
+        "This is _italic_ text",
     ),
     (
         "bold_and_underline_combo",

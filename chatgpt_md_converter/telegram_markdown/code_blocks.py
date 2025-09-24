@@ -8,6 +8,22 @@ _CODE_BLOCK_RE = re.compile(
 )
 
 
+
+def _count_unescaped_backticks(text: str) -> int:
+    """Return the number of backticks not escaped by a backslash."""
+    count = 0
+    for index, char in enumerate(text):
+        if char != "`":
+            continue
+        backslashes = 0
+        j = index - 1
+        while j >= 0 and text[j] == '\\':
+            backslashes += 1
+            j -= 1
+        if backslashes % 2 == 0:
+            count += 1
+    return count
+
 def ensure_closing_delimiters(text: str) -> str:
     """Append any missing closing backtick fences for Markdown code blocks."""
     open_fence = None
@@ -31,7 +47,7 @@ def ensure_closing_delimiters(text: str) -> str:
         text += "```"
 
     cleaned_inline = _CODE_BLOCK_RE.sub("", text)
-    if cleaned_inline.count("`") % 2 != 0:
+    if _count_unescaped_backticks(cleaned_inline) % 2 != 0:
         text += "`"
 
     return text

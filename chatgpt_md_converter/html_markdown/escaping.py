@@ -7,6 +7,20 @@ import re
 
 from .tree import Node
 
+_SIMPLE_STAR_ITALIC = re.compile(
+    r"(?<!\\)(?<!\*)\*(?=[^\s])([^\*\n]+?)(?<!\s)\*(?![A-Za-z0-9\*])",
+)
+
+
+def _canonicalize_star_italics(text: str) -> str:
+    def _replace(match: re.Match[str]) -> str:
+        inner = match.group(1)
+        if "*" in inner or "_" in inner or "`" in inner:
+            return match.group(0)
+        return f"_{inner}_"
+
+    return _SIMPLE_STAR_ITALIC.sub(_replace, text)
+
 
 def normalise_text(text: str) -> str:
     if not text:
@@ -50,4 +64,5 @@ def post_process(markdown: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = text.replace("\r", "")
     text = "\n".join(line.rstrip() for line in text.split("\n"))
+    text = _canonicalize_star_italics(text)
     return text.strip()

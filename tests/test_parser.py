@@ -936,3 +936,10 @@ print("hello world ```")
       print(f"Expected was: \n\n{expected_output}\n\n")
       print(f"output was: \n\n{output}")
     assert output == expected_output, show_output()
+
+def test_inline_code_with_escaped_backtick_trailing_text():
+    """Ensure inline code with escaped backtick does not gain an extra closing tick."""
+    input_text = "Escaped \\*asterisks\\* and `code with \\` backtick`"
+    expected_output = "Escaped \\*asterisks\\* and <code>code with \\</code> backtick`"
+    output = telegram_format(input_text)
+    assert output == expected_output
