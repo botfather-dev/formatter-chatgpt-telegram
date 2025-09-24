@@ -1,0 +1,44 @@
+{
+  "short_inline": {
+    "md_to_html": {
+      "iterations": 1000,
+      "total_seconds": 0.04430689998844173,
+      "avg_ms_per_call": 0.04430689998844173,
+      "ops_per_second": 22569.848043100927
+    },
+    "html_to_md": {
+      "iterations": 1000,
+      "total_seconds": 0.08317063600406982,
+      "avg_ms_per_call": 0.08317063600406982,
+      "ops_per_second": 12023.474245779084
+    }
+  },
+  "medium_block": {
+    "md_to_html": {
+      "iterations": 1000,
+      "total_seconds": 0.11097947201051284,
+      "avg_ms_per_call": 0.11097947201051284,
+      "ops_per_second": 9010.675414866564
+    },
+    "html_to_md": {
+      "iterations": 1000,
+      "total_seconds": 0.16560287500033155,
+      "avg_ms_per_call": 0.16560287500033155,
+      "ops_per_second": 6038.542507175663
+    }
+  },
+  "long_mixed": {
+    "md_to_html": {
+      "iterations": 1000,
+      "total_seconds": 0.4931761070038192,
+      "avg_ms_per_call": 0.49317610700381925,
+      "ops_per_second": 2027.67325058644
+    },
+    "html_to_md": {
+      "iterations": 1000,
+      "total_seconds": 0.8292620830034139,
+      "avg_ms_per_call": 0.8292620830034139,
+      "ops_per_second": 1205.8913828282236
+    }
+  }
+}
