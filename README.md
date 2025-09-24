@@ -91,6 +91,24 @@ Hidden by default
 Multiple lines</blockquote>
 ```
 
+
+## Performance
+
+Benchmarks were recorded on Linux 6.16.6 (Python 3.11.10) using 1,000 iterations per sample.
+
+| Sample       | Direction     | Avg ms/call | Ops/sec |
+|--------------|---------------|-------------|---------|
+| short_inline | Markdown→HTML | 0.043       | 23,476  |
+| short_inline | HTML→Markdown | 0.078       | 12,824  |
+| medium_block | Markdown→HTML | 0.108       |  9,270  |
+| medium_block | HTML→Markdown | 0.155       |  6,437  |
+| long_mixed   | Markdown→HTML | 0.446       |  2,242  |
+| long_mixed   | HTML→Markdown | 0.730       |  1,370  |
+
+These numbers provide a baseline; real-world throughput depends on text length and interpreter speed.
+
+Reproduce the measurements with `python scripts/benchmark.py --iterations 1000 --json benchmarks.json --summary BENCHMARKS.md`.
+
 ## Requirements
 
 - Python 3.x
