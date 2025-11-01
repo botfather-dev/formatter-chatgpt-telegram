@@ -67,7 +67,7 @@ def extract_and_convert_code_blocks(text: str):
             .replace("<", "&lt;")
             .replace(">", "&gt;")
         )
-        placeholder = f"CODEBLOCKPLACEHOLDER{len(placeholders)}"
+        placeholder = f"CODEBLOCKPLACEHOLDER_{len(placeholders)}_"
         placeholders.append(placeholder)
         if language:
             html_block = f'<pre><code class="language-{language}">{escaped}</code></pre>'

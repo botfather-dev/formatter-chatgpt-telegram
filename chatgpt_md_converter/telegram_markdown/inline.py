@@ -60,7 +60,7 @@ def extract_inline_code_snippets(text: str):
 
     def replacer(match: re.Match[str]) -> str:
         snippet = match.group(1)
-        placeholder = f"INLINECODEPLACEHOLDER{len(placeholders)}"
+        placeholder = f"INLINECODEPLACEHOLDER_{len(placeholders)}_"
         placeholders.append(placeholder)
         snippets[placeholder] = snippet
         return placeholder

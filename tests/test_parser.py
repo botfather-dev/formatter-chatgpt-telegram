@@ -800,6 +800,66 @@ print("hello world ```")
     assert output == expected_output, show_output()
 
 
+def test_inline_code_placeholders_do_not_overlap():
+    input_text = """Службова нотатка для тесту.
+
+Коли ви запускаєте `alpha.run()`, система піднімає локальний клієнт.
+
+У модулі використовується `hook.set()` для реєстрації синхронізації.
+
+```python
+from framework import hook
+
+async def configure(base_url: str):
+    await hook.set(f"{base_url}/sync")
+```
+
+**Покроковий план**
+
+1.  Викликаємо `hook.set()` через менеджер потоків.
+2.  `hook.set()` повертає попередження при повторній реєстрації.
+3.  Якщо потрібно, `hook.clear()` знімає прив'язку.
+4.  Використовуємо `core.loop()` для довготривалих з'єднань.
+5.  `hook.set()` запускає фонову синхронізацію.
+
+Поточне середовище потребує **TLS**. Для локального доступу підходить `debug.tunnel`.
+
+Чи є питання щодо `hook.set()` чи `hook.clear()`?"""
+
+    expected_output = """Службова нотатка для тесту.
+
+Коли ви запускаєте <code>alpha.run()</code>, система піднімає локальний клієнт.
+
+У модулі використовується <code>hook.set()</code> для реєстрації синхронізації.
+
+<pre><code class="language-python">from framework import hook
+
+async def configure(base_url: str):
+    await hook.set(f"{base_url}/sync")
+</code></pre>
+
+<b>Покроковий план</b>
+
+1.  Викликаємо <code>hook.set()</code> через менеджер потоків.
+2.  <code>hook.set()</code> повертає попередження при повторній реєстрації.
+3.  Якщо потрібно, <code>hook.clear()</code> знімає прив'язку.
+4.  Використовуємо <code>core.loop()</code> для довготривалих з'єднань.
+5.  <code>hook.set()</code> запускає фонову синхронізацію.
+
+Поточне середовище потребує <b>TLS</b>. Для локального доступу підходить <code>debug.tunnel</code>.
+
+Чи є питання щодо <code>hook.set()</code> чи <code>hook.clear()</code>?"""
+
+    output = telegram_format(input_text)
+
+    assert output == expected_output
+    assert "<code>hook.set()</code>0" not in output
+    assert "<code>hook.set()</code>1" not in output
+    assert "<code>hook.set()</code>2" not in output
+    assert "<code>hook.set()</code>3" not in output
+    assert "<code>hook.set()</code>4" not in output
+
+
 def test_nested_code_fence_six_backticks():
     input_text = """``````markdown
 `````python
