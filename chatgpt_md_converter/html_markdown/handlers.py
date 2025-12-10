@@ -169,11 +169,12 @@ def _handle_blockquote(node: Node, state: RenderState) -> str:
     expandable = "expandable" in node.attrs
     rendered: list[str] = []
     for index, line in enumerate(lines):
-        prefix = "**>" if expandable and index == 0 else ">"
         stripped = line.rstrip("\r")
         if expandable:
-            rendered.append(prefix + stripped)
+            marker = ">**" if index == 0 else ">"
+            rendered.append(f"{marker} {stripped}" if stripped else marker)
         else:
+            prefix = ">"
             rendered.append(f"{prefix} {stripped}" if stripped else prefix)
     return "\n".join(rendered)
 

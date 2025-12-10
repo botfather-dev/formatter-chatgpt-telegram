@@ -716,6 +716,41 @@ Continued</blockquote>"""
     assert output == expected_output, "Failed handling spoiler inside blockquote"
 
 
+def test_blockquote_lines_inside_code_block():
+    input_text = """```text
+>** заголовок довгої цитати
+> рядок 2
+> рядок 3
+> рядок 4
+> і ще хоч сто рядків
+```"""
+    expected_output = (
+        '<pre><code class="language-text">&gt;** заголовок довгої цитати\n'
+        '&gt; рядок 2\n'
+        '&gt; рядок 3\n'
+        '&gt; рядок 4\n'
+        '&gt; і ще хоч сто рядків\n'
+        "</code></pre>"
+    )
+    output = telegram_format(input_text)
+    assert output == expected_output, f"Got: {output}"
+
+
+def test_blockquote_double_asterisk_prefix():
+    input_text = """>** заголовок довгої цитати
+> рядок 2
+> рядок 3
+> рядок 4
+> і ще хоч сто рядків"""
+    expected_output = """<blockquote expandable>заголовок довгої цитати
+рядок 2
+рядок 3
+рядок 4
+і ще хоч сто рядків</blockquote>"""
+    output = telegram_format(input_text)
+    assert output == expected_output, f"Got: {output}"
+
+
 def test_multiple_spoilers():
     input_text = "First ||spoiler|| and then another ||spoiler with *italic*||"
     expected_output = 'First <span class="tg-spoiler">spoiler</span> and then another <span class="tg-spoiler">spoiler with <i>italic</i></span>'

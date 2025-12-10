@@ -14,6 +14,10 @@ def combine_blockquotes(text: str) -> str:
             in_blockquote = True
             is_expandable = True
             blockquote_lines.append(line[3:].strip())
+        elif line.startswith(">**") and (len(line) == 3 or line[3].isspace()):
+            in_blockquote = True
+            is_expandable = True
+            blockquote_lines.append(line[3:].strip())
         elif line.startswith(">"):
             if not in_blockquote:
                 in_blockquote = True

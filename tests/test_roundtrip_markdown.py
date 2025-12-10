@@ -30,3 +30,10 @@ def test_markdown_html_markdown_cycle_is_idempotent(_case, markdown_input, _):
     assert '<br' not in html_first
     assert '<br' not in html_third
     assert html_first == html_third
+
+
+def test_html_to_markdown_expandable_blockquote():
+    html_text = "<blockquote expandable>заголовок\nрядок 2\nрядок 3</blockquote>"
+    expected_markdown = ">** заголовок\n> рядок 2\n> рядок 3"
+    markdown = html_to_telegram_markdown(html_text)
+    assert markdown == expected_markdown

@@ -24,9 +24,9 @@ ROUND_TRIP_CASES = [
             > Block quotation started
             > Block quotation continued
 
-            **>Expandable block quotation started
-            >Expandable block quotation continued
-            >Hidden by default||
+            >** Expandable block quotation started
+            > Expandable block quotation continued
+            > Hidden by default||
 
             - Bullet with `code`
             - Second bullet with __underline__ and ||spoiler||
@@ -42,9 +42,9 @@ ROUND_TRIP_CASES = [
             > Block quotation started
             > Block quotation continued
 
-            **>Expandable block quotation started
-            >Expandable block quotation continued
-            >Hidden by default||
+            >** Expandable block quotation started
+            > Expandable block quotation continued
+            > Hidden by default||
 
             - Bullet with `code`
             - Second bullet with __underline__ and ||spoiler||
@@ -170,6 +170,27 @@ ROUND_TRIP_CASES = [
             > First quote line
             >
             > Third quote line
+            """
+        ).strip(),
+    ),
+    (
+        "expandable_blockquote_marker",
+        textwrap.dedent(
+            """
+            >** заголовок довгої цитати
+            > рядок 2
+            > рядок 3
+            > рядок 4
+            > і ще хоч сто рядків
+            """
+        ).strip(),
+        textwrap.dedent(
+            """
+            >** заголовок довгої цитати
+            > рядок 2
+            > рядок 3
+            > рядок 4
+            > і ще хоч сто рядків
             """
         ).strip(),
     ),

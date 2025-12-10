@@ -12,9 +12,8 @@ from .preprocess import combine_blockquotes
 
 
 def telegram_format(text: str) -> str:
-    text = combine_blockquotes(text)
-
     output, block_map = extract_and_convert_code_blocks(text)
+    output = combine_blockquotes(output)
     output, inline_snippets = extract_inline_code_snippets(output)
 
     output = convert_html_chars(output)
