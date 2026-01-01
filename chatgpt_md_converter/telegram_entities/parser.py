@@ -167,8 +167,8 @@ def parse_entities(text: str) -> Tuple[str, List[TelegramEntity]]:
     text, inline_entities = extract_inline_formatting_entities(text)
     all_entities.extend(inline_entities)
 
-    # Extract links AFTER inline formatting so offsets are correct
-    text, link_entities = extract_link_entities(text)
+    # Extract links AFTER inline formatting, adjusting existing entity offsets
+    text, link_entities, all_entities = extract_link_entities(text, all_entities)
     all_entities.extend(link_entities)
 
     # Phase 4: Restore code placeholders and create entities

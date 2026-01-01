@@ -10,7 +10,10 @@ from ..entity import EntityType, TelegramEntity
 _LINK_PATTERN = re.compile(r"!?\[((?:[^\[\]]|\[.*?\])*)\]\(([^)]+)\)")
 
 
-def extract_link_entities(text: str) -> Tuple[str, List[TelegramEntity]]:
+def extract_link_entities(
+    text: str,
+    existing_entities: List[TelegramEntity] | None = None,
+) -> Tuple[str, List[TelegramEntity], List[TelegramEntity]]:
     """
     Extract Markdown links and return plain text with TEXT_LINK entities.
 
@@ -19,13 +22,17 @@ def extract_link_entities(text: str) -> Tuple[str, List[TelegramEntity]]:
 
     Args:
         text: Input text with Markdown links
+        existing_entities: Optional list of entities to adjust offsets for
 
     Returns:
-        Tuple of (text_with_links_replaced, list_of_entities)
+        Tuple of (text_with_links_replaced, link_entities, adjusted_existing_entities)
     """
     entities: List[TelegramEntity] = []
     result_parts: List[str] = []
     last_end = 0
+
+    # Track adjustments: list of (position_in_original, chars_removed)
+    adjustments: List[Tuple[int, int]] = []
 
     for match in _LINK_PATTERN.finditer(text):
         # Add text before this link
@@ -37,6 +44,12 @@ def extract_link_entities(text: str) -> Tuple[str, List[TelegramEntity]]:
         # Extract link text and URL
         link_text = match.group(1)
         url = match.group(2)
+
+        # Calculate how many chars are removed
+        # Original: [text](url) or ![text](url)
+        # New: text
+        chars_removed = len(match.group(0)) - len(link_text)
+        adjustments.append((match.start(), chars_removed))
 
         # Add the link text (without the markdown syntax)
         result_parts.append(link_text)
@@ -56,4 +69,23 @@ def extract_link_entities(text: str) -> Tuple[str, List[TelegramEntity]]:
     # Add remaining text
     result_parts.append(text[last_end:])
 
-    return "".join(result_parts), entities
+    # Adjust existing entities
+    adjusted_existing: List[TelegramEntity] = []
+    if existing_entities:
+        for e in existing_entities:
+            new_offset = e.offset
+            # Apply all adjustments that occur before this entity
+            for adj_pos, chars_removed in adjustments:
+                if adj_pos < e.offset:
+                    new_offset -= chars_removed
+            adjusted_existing.append(
+                TelegramEntity(
+                    type=e.type,
+                    offset=new_offset,
+                    length=e.length,
+                    url=e.url,
+                    language=e.language,
+                )
+            )
+
+    return "".join(result_parts), entities, adjusted_existing
