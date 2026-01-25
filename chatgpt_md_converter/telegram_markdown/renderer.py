@@ -39,8 +39,8 @@ def telegram_format(text: str) -> str:
     emoji_pattern = r"!\[([^\]]*)\]\(tg://emoji\?id=(\d+)\)"
     output = re.sub(emoji_pattern, r'<tg-emoji emoji-id="\2">\1</tg-emoji>', output)
 
-    # Handle regular links (excluding image syntax which was handled above)
-    link_pattern = r"\[((?:[^\[\]]|\[.*?\])*)\]\(([^)]+)\)"
+    # Handle all links including images (! prefix is stripped for non-emoji images)
+    link_pattern = r"(?:!?)\[((?:[^\[\]]|\[.*?\])*)\]\(([^)]+)\)"
     output = re.sub(link_pattern, r'<a href="\2">\1</a>', output)
 
     for placeholder, snippet in inline_snippets.items():
