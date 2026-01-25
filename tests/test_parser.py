@@ -1038,3 +1038,19 @@ def test_inline_code_with_escaped_backtick_trailing_text():
     expected_output = "Escaped \\*asterisks\\* and <code>code with \\</code> backtick`"
     output = telegram_format(input_text)
     assert output == expected_output
+
+
+def test_custom_emoji_conversion():
+    """Test that custom emoji markdown is converted to tg-emoji HTML tag."""
+    input_text = "Hello ![❤️](tg://emoji?id=5226457415154701085) world"
+    expected_output = 'Hello <tg-emoji emoji-id="5226457415154701085">❤️</tg-emoji> world'
+    output = telegram_format(input_text)
+    assert output == expected_output, "Failed converting custom emoji to <tg-emoji> tag"
+
+
+def test_custom_emoji_with_regular_link():
+    """Test that custom emoji and regular links are both handled correctly."""
+    input_text = "Emoji ![👍](tg://emoji?id=5368324170671202286) and [link](https://example.com)"
+    expected_output = 'Emoji <tg-emoji emoji-id="5368324170671202286">👍</tg-emoji> and <a href="https://example.com">link</a>'
+    output = telegram_format(input_text)
+    assert output == expected_output, "Failed handling emoji and link together"
