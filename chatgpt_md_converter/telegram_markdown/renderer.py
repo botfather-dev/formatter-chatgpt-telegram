@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 
 from .code_blocks import extract_and_convert_code_blocks, reinsert_code_blocks
+from .html_escape import escape_code_content
 from .inline import (apply_custom_italic, convert_html_chars,
                      extract_inline_code_snippets, split_by_tag)
 from .postprocess import remove_blockquote_escaping, remove_spoiler_escaping
@@ -44,11 +45,7 @@ def telegram_format(text: str) -> str:
     output = re.sub(link_pattern, r'<a href="\2">\1</a>', output)
 
     for placeholder, snippet in inline_snippets.items():
-        escaped = (
-            snippet.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-        )
+        escaped = escape_code_content(snippet)
         output = output.replace(placeholder, f"<code>{escaped}</code>")
 
     output = reinsert_code_blocks(output, block_map)

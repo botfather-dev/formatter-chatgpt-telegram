@@ -2,6 +2,8 @@
 
 import re
 
+from .html_escape import escape_code_content
+
 _CODE_BLOCK_RE = re.compile(
     r"(?P<fence>`{3,})(?P<lang>\w+)?\n?[\s\S]*?(?<=\n)?(?P=fence)",
     flags=re.DOTALL,
@@ -62,11 +64,7 @@ def extract_and_convert_code_blocks(text: str):
     def _replacement(match: re.Match[str]) -> tuple[str, str]:
         language = match.group("lang") or ""
         code_content = match.group("code")
-        escaped = (
-            code_content.replace("&", "&amp;")
-            .replace("<", "&lt;")
-            .replace(">", "&gt;")
-        )
+        escaped = escape_code_content(code_content)
         placeholder = f"CODEBLOCKPLACEHOLDER_{len(placeholders)}_"
         placeholders.append(placeholder)
         if language:
