@@ -49,6 +49,13 @@ def split_by_tag(out_text: str, md_tag: str, html_tag: str) -> str:
 
     def _wrap(match: re.Match[str]) -> str:
         inner = match.group(1)
+
+        if not inner.strip():
+            return match.group(0)
+
+        if md_tag == "**" and not re.search(r"[^\s*]", inner):
+            return match.group(0)
+
         if html_tag == 'span class="tg-spoiler"':
             return f'<span class="tg-spoiler">{inner}</span>'
         return f"<{html_tag}>{inner}</{html_tag}>"

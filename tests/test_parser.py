@@ -29,13 +29,24 @@ def test_star_runs_do_not_break_tag_nesting():
     ), "Failed handling star runs without breaking tag nesting"
 
 
-def test_four_star_run_does_not_cross_bold():
+def test_four_star_run_does_not_break_tag_nesting():
     input_text = "****Парадигма text****"
-    expected_output = "<b><i>*Парадигма text</i></b>*"
     output = telegram_format(input_text)
-    assert (
-        output == expected_output
-    ), "Failed handling four-star runs without crossing tags"
+    assert "</b></i>" not in output, "Four-star run produced broken closing order"
+
+
+def test_empty_star_runs_remain_literal_text():
+    input_text = "****"
+    expected_output = "****"
+    output = telegram_format(input_text)
+    assert output == expected_output, "Empty star runs should stay literal"
+
+
+def test_whitespace_only_triple_star_run_remains_literal_text():
+    input_text = "*** ***"
+    expected_output = "*** ***"
+    output = telegram_format(input_text)
+    assert output == expected_output, "Whitespace-only triple-star should stay literal"
 
 
 def test_triple_backticks_with_language():

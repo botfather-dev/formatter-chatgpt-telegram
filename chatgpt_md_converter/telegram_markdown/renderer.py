@@ -22,8 +22,30 @@ def telegram_format(text: str) -> str:
     output = re.sub(r"^(#{1,6})\s+(.+)$", r"<b>\2</b>", output, flags=re.MULTILINE)
     output = re.sub(r"^(\s*)[\-\*]\s+(.+)$", r"\1• \2", output, flags=re.MULTILINE)
 
-    output = re.sub(r"\*\*\*(.*?)\*\*\*", r"<b><i>\1</i></b>", output)
-    output = re.sub(r"\_\_\_(.*?)\_\_\_", r"<u><i>\1</i></u>", output)
+    def _replace_triple_star(match: re.Match[str]) -> str:
+        inner = match.group(1)
+        if not inner.strip():
+            return match.group(0)
+        return f"<b><i>{inner}</i></b>"
+
+    def _replace_triple_underscore(match: re.Match[str]) -> str:
+        inner = match.group(1)
+        if not inner.strip():
+            return match.group(0)
+        return f"<u><i>{inner}</i></u>"
+
+    output = re.sub(
+        r"(?<!\*)\*\*\*(?!\*)(.*?)(?<!\*)\*\*\*(?!\*)",
+        _replace_triple_star,
+        output,
+        flags=re.DOTALL,
+    )
+    output = re.sub(
+        r"(?<!_)___(?!_)(.*?)(?<!_)___(?!_)",
+        _replace_triple_underscore,
+        output,
+        flags=re.DOTALL,
+    )
 
     output = split_by_tag(output, "**", "b")
     output = split_by_tag(output, "__", "u")
