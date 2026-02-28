@@ -4,7 +4,10 @@ import re
 
 _inline_code_pattern = re.compile(r"`([^`]+)`")
 
-_BOLD_PATTERN = re.compile(r"(?<!\\)\*\*(?=\S)(.*?)(?<=\S)\*\*", re.DOTALL)
+_BOLD_PATTERN = re.compile(
+    r"(?<!\\)\*\*(?!\*)(?=\S)(.*?)(?<=\S)(?<!\*)\*\*(?!\*)",
+    re.DOTALL,
+)
 _UNDERLINE_PATTERN = re.compile(
     r"(?<!\\)(?<![A-Za-z0-9_])__(?=\S)(.*?)(?<=\S)__(?![A-Za-z0-9_])",
     re.DOTALL,
@@ -16,7 +19,7 @@ _ITALIC_UNDERSCORE_PATTERN = re.compile(
 _STRIKETHROUGH_PATTERN = re.compile(r"(?<!\\)~~(?=\S)(.*?)(?<=\S)~~", re.DOTALL)
 _SPOILER_PATTERN = re.compile(r"(?<!\\)\|\|(?=\S)([^\n]*?)(?<=\S)\|\|")
 _ITALIC_STAR_PATTERN = re.compile(
-    r"(?<![A-Za-z0-9\\])\*(?!\*)(?=[^\s])(.*?)(?<![\s\\])\*(?![A-Za-z0-9\\])",
+    r"(?<![A-Za-z0-9\\*])\*(?!\*)(?=\S)(.*?)(?<![\s\\*])\*(?![A-Za-z0-9\\*])",
     re.DOTALL,
 )
 
@@ -27,31 +30,6 @@ _PATTERN_MAP = {
     "~~": _STRIKETHROUGH_PATTERN,
     "||": _SPOILER_PATTERN,
 }
-
-_VOID_TAGS = {"br", "hr", "img", "input", "link", "meta"}
-_HTML_TAG_PATTERN = re.compile(r"<(/?)([A-Za-z][A-Za-z0-9-]*)([^>]*)>")
-
-
-def _has_balanced_html_tags(fragment: str) -> bool:
-    stack: list[str] = []
-
-    for match in _HTML_TAG_PATTERN.finditer(fragment):
-        is_closing = bool(match.group(1))
-        tag_name = match.group(2).lower()
-        suffix = match.group(3)
-
-        if is_closing:
-            if not stack or stack[-1] != tag_name:
-                return False
-            stack.pop()
-            continue
-
-        is_self_closing = suffix.rstrip().endswith("/") or tag_name in _VOID_TAGS
-        if not is_self_closing:
-            stack.append(tag_name)
-
-    return not stack
-
 
 def convert_html_chars(text: str) -> str:
     text = text.replace("&", "&amp;")
@@ -101,10 +79,4 @@ def extract_inline_code_snippets(text: str):
 
 
 def apply_custom_italic(text: str) -> str:
-    def _wrap(match: re.Match[str]) -> str:
-        inner = match.group(1)
-        if "<" in inner and not _has_balanced_html_tags(inner):
-            return match.group(0)
-        return f"<i>{inner}</i>"
-
-    return _ITALIC_STAR_PATTERN.sub(_wrap, text)
+    return _ITALIC_STAR_PATTERN.sub(r"<i>\1</i>", text)

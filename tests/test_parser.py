@@ -20,13 +20,11 @@ def test_telegram_format_italic_star():
     assert output == "This is <i>italic</i> text"
 
 
-def test_star_runs_do_not_break_tag_nesting():
+def test_star_runs_with_spacing_stay_literal_text():
     input_text = "**Парадигма text ****"
-    expected_output = "<b>Парадигма text *</b>*"
+    expected_output = "**Парадигма text ****"
     output = telegram_format(input_text)
-    assert (
-        output == expected_output
-    ), "Failed handling star runs without breaking tag nesting"
+    assert output == expected_output, "Star runs with spacing should stay literal"
 
 
 def test_four_star_run_does_not_break_tag_nesting():
@@ -47,6 +45,13 @@ def test_whitespace_only_triple_star_run_remains_literal_text():
     expected_output = "*** ***"
     output = telegram_format(input_text)
     assert output == expected_output, "Whitespace-only triple-star should stay literal"
+
+
+def test_triple_star_with_outer_spaces_stays_literal_text():
+    input_text = "*** Парадигма text ***"
+    expected_output = "*** Парадигма text ***"
+    output = telegram_format(input_text)
+    assert output == expected_output, "Triple-star with outer spaces should stay literal"
 
 
 def test_triple_backticks_with_language():
