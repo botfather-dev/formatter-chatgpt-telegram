@@ -20,6 +20,24 @@ def test_telegram_format_italic_star():
     assert output == "This is <i>italic</i> text"
 
 
+def test_star_runs_do_not_break_tag_nesting():
+    input_text = "**Парадигма text ****"
+    expected_output = "<b>Парадигма text *</b>*"
+    output = telegram_format(input_text)
+    assert (
+        output == expected_output
+    ), "Failed handling star runs without breaking tag nesting"
+
+
+def test_four_star_run_does_not_cross_bold():
+    input_text = "****Парадигма text****"
+    expected_output = "<b><i>*Парадигма text</i></b>*"
+    output = telegram_format(input_text)
+    assert (
+        output == expected_output
+    ), "Failed handling four-star runs without crossing tags"
+
+
 def test_triple_backticks_with_language():
     input_text = "```python\nprint('Hello, world!')\n```"
     expected_output = (
