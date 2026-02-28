@@ -29,6 +29,28 @@ _PATTERN_MAP = {
 }
 
 _VOID_TAGS = {"br", "hr", "img", "input", "link", "meta"}
+_HTML_TAG_PATTERN = re.compile(r"<(/?)([A-Za-z][A-Za-z0-9-]*)([^>]*)>")
+
+
+def _has_balanced_html_tags(fragment: str) -> bool:
+    stack: list[str] = []
+
+    for match in _HTML_TAG_PATTERN.finditer(fragment):
+        is_closing = bool(match.group(1))
+        tag_name = match.group(2).lower()
+        suffix = match.group(3)
+
+        if is_closing:
+            if not stack or stack[-1] != tag_name:
+                return False
+            stack.pop()
+            continue
+
+        is_self_closing = suffix.rstrip().endswith("/") or tag_name in _VOID_TAGS
+        if not is_self_closing:
+            stack.append(tag_name)
+
+    return not stack
 
 
 def convert_html_chars(text: str) -> str:
@@ -78,50 +100,11 @@ def extract_inline_code_snippets(text: str):
     return modified, snippets
 
 
-def _tag_stack_at_stars(text: str) -> dict[int, tuple[str, ...]]:
-    star_positions = {match.start() for match in re.finditer(r"\*", text)}
-    stack: list[str] = []
-    stack_at: dict[int, tuple[str, ...]] = {}
-
-    i = 0
-    text_len = len(text)
-    while i < text_len:
-        if i in star_positions:
-            stack_at[i] = tuple(stack)
-        if text[i] == "<":
-            tag_end = text.find(">", i + 1)
-            if tag_end == -1:
-                i += 1
-                continue
-            tag_content = text[i + 1 : tag_end].strip()
-            if tag_content:
-                is_closing = tag_content.startswith("/")
-                if is_closing:
-                    tag_name = tag_content[1:].split()[0].lower()
-                    if stack and stack[-1] == tag_name:
-                        stack.pop()
-                else:
-                    tag_name = tag_content.split()[0].lower().rstrip("/")
-                    is_self_closing = tag_content.endswith("/") or tag_name in _VOID_TAGS
-                    if not is_self_closing:
-                        stack.append(tag_name)
-            i = tag_end + 1
-            continue
-        i += 1
-
-    return stack_at
-
-
 def apply_custom_italic(text: str) -> str:
-    stack_at = _tag_stack_at_stars(text)
-
     def _wrap(match: re.Match[str]) -> str:
-        start = match.start()
-        end = match.end() - 1
-        start_stack = stack_at.get(start)
-        end_stack = stack_at.get(end)
-        if start_stack is None or end_stack is None or start_stack != end_stack:
+        inner = match.group(1)
+        if "<" in inner and not _has_balanced_html_tags(inner):
             return match.group(0)
-        return f"<i>{match.group(1)}</i>"
+        return f"<i>{inner}</i>"
 
     return _ITALIC_STAR_PATTERN.sub(_wrap, text)
