@@ -22,8 +22,18 @@ def telegram_format(text: str) -> str:
     output = re.sub(r"^(#{1,6})\s+(.+)$", r"<b>\2</b>", output, flags=re.MULTILINE)
     output = re.sub(r"^(\s*)[\-\*]\s+(.+)$", r"\1• \2", output, flags=re.MULTILINE)
 
-    output = re.sub(r"\*\*\*(.*?)\*\*\*", r"<b><i>\1</i></b>", output)
-    output = re.sub(r"\_\_\_(.*?)\_\_\_", r"<u><i>\1</i></u>", output)
+    output = re.sub(
+        r"(?<!\*)\*\*\*(?!\*)(?=\S)(.*?)(?<=\S)(?<!\*)\*\*\*(?!\*)",
+        r"<b><i>\1</i></b>",
+        output,
+        flags=re.DOTALL,
+    )
+    output = re.sub(
+        r"(?<!_)___(?!_)(?=\S)(.*?)(?<=\S)(?<!_)___(?!_)",
+        r"<u><i>\1</i></u>",
+        output,
+        flags=re.DOTALL,
+    )
 
     output = split_by_tag(output, "**", "b")
     output = split_by_tag(output, "__", "u")

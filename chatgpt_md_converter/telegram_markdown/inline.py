@@ -4,7 +4,10 @@ import re
 
 _inline_code_pattern = re.compile(r"`([^`]+)`")
 
-_BOLD_PATTERN = re.compile(r"(?<!\\)\*\*(?=\S)(.*?)(?<=\S)\*\*", re.DOTALL)
+_BOLD_PATTERN = re.compile(
+    r"(?<!\\)\*\*(?!\*)(?=\S)(.*?)(?<=\S)(?<!\*)\*\*(?!\*)",
+    re.DOTALL,
+)
 _UNDERLINE_PATTERN = re.compile(
     r"(?<!\\)(?<![A-Za-z0-9_])__(?=\S)(.*?)(?<=\S)__(?![A-Za-z0-9_])",
     re.DOTALL,
@@ -16,7 +19,7 @@ _ITALIC_UNDERSCORE_PATTERN = re.compile(
 _STRIKETHROUGH_PATTERN = re.compile(r"(?<!\\)~~(?=\S)(.*?)(?<=\S)~~", re.DOTALL)
 _SPOILER_PATTERN = re.compile(r"(?<!\\)\|\|(?=\S)([^\n]*?)(?<=\S)\|\|")
 _ITALIC_STAR_PATTERN = re.compile(
-    r"(?<![A-Za-z0-9\\])\*(?!\*)(?=[^\s])(.*?)(?<![\s\\])\*(?![A-Za-z0-9\\])",
+    r"(?<![A-Za-z0-9\\*])\*(?!\*)(?=\S)(.*?)(?<![\s\\*])\*(?![A-Za-z0-9\\*])",
     re.DOTALL,
 )
 
@@ -27,7 +30,6 @@ _PATTERN_MAP = {
     "~~": _STRIKETHROUGH_PATTERN,
     "||": _SPOILER_PATTERN,
 }
-
 
 def convert_html_chars(text: str) -> str:
     text = text.replace("&", "&amp;")
@@ -47,6 +49,13 @@ def split_by_tag(out_text: str, md_tag: str, html_tag: str) -> str:
 
     def _wrap(match: re.Match[str]) -> str:
         inner = match.group(1)
+
+        if not inner.strip():
+            return match.group(0)
+
+        if md_tag == "**" and not re.search(r"[^\s*]", inner):
+            return match.group(0)
+
         if html_tag == 'span class="tg-spoiler"':
             return f'<span class="tg-spoiler">{inner}</span>'
         return f"<{html_tag}>{inner}</{html_tag}>"
